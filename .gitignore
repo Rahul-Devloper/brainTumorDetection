@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Model files
+*.h5
+*.pkl
+
+# Dataset
+input/
+*.jpg
+*.png
+
+# IDE specific files
+.vscode/
+.idea/
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# zip files
+*.zip
