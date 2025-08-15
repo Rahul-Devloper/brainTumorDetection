@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 TEST_DIR = "../data/binary_split/test"
 MODEL_PATH = "../notebooks/api/model/brain_mri_model.h5"
 
-THRESHOLD = 0.43   # Replace with your tuned value
+THRESHOLD = 0.05   # Replace with your tuned value
 IMG_SIZE = (28, 28)
 
 # === 1. Load model ===

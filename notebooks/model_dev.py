@@ -351,7 +351,7 @@ from tensorflow.keras.models import load_model
 MODEL_PATH = "api/model/brain_mri_model.h5"
 META_PATH  = "api/model/metadata.json"   # optional (for threshold + metadata)
 INPUT_SIZE = (28, 28)                    # must match training
-DEFAULT_THRESHOLD = 0.5                  # fallback if no metadata/best['thr']
+DEFAULT_THRESHOLD = 0.05                  # fallback if no metadata/best['thr']
 
 # ---- Load model ----
 model = load_model(MODEL_PATH)
