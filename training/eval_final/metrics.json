@@ -1,0 +1,32 @@
+{
+  "timestamp": "2025-08-18T19:08:55",
+  "threshold_locked": 0.05,
+  "counts": {
+    "total": 1315,
+    "tumor_positives": 908,
+    "no_tumor_negatives": 407
+  },
+  "metrics": {
+    "accuracy": 0.8,
+    "precision_tumor": 0.7782571182053495,
+    "recall_tumor": 0.9933920704845814,
+    "f1_tumor": 0.872762457668118,
+    "specificity_no_tumor": 0.36855036855036855,
+    "npv_no_tumor": 0.9615384615384616,
+    "roc_auc": 0.9203314247367111,
+    "pr_auc": 0.955315481795482
+  },
+  "confusion_matrix": {
+    "tn": 150,
+    "fp": 257,
+    "fn": 6,
+    "tp": 902,
+    "format": "rows=true [no_tumor(0), tumor(1)], cols=pred [0,1]"
+  },
+  "best_f1_sweep": {
+    "f1": 0.9203252032520325,
+    "threshold": 0.2,
+    "precision": 0.9060832443970117,
+    "recall": 0.9350220264317181
+  }
+}
