@@ -5,7 +5,7 @@ import cv2
 import tensorflow as tf
 
 # Model + threshold (can be overridden with env vars in Docker/cloud)
-MODEL_PATH = os.getenv("MODEL_PATH", "api/model/brain_mri_model.h5")
+MODEL_PATH = os.getenv("MODEL_PATH", "notebooks/api/model/brain_mri_model.h5")
 THRESHOLD = float(os.getenv("THRESHOLD", "0.05"))
 
 app = Flask(__name__)
