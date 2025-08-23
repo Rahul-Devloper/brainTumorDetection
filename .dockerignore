@@ -1,0 +1,32 @@
+# Ignore Python cache and temporary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Ignore OS junk
+.DS_Store
+Thumbs.db
+
+# Ignore Git
+.git
+.gitignore
+
+# Ignore local environments and notebooks
+.venv/
+env/
+venv/
+*.ipynb
+notebooks/
+training/
+eval_final/
+
+# Ignore large datasets (don’t package into Docker)
+data/
+input/
+archive.zip
+
+# Ignore IDE/editor configs
+.vscode/
+.idea/
