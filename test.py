@@ -34,3 +34,4 @@ import requests
 with open(r"D:\ML_Projects\brainTumorDetection\input\Testing\notumor\Te-no_0040.jpg", "rb") as f:
     r = requests.post("http://localhost:8080/predict", files={"file": f})
 print(r.json())
+
