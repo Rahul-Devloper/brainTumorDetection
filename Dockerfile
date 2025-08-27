@@ -1,26 +1,26 @@
 FROM python:3.10-slim
 
-# System libs OpenCV/tensorflow may need
+# System deps (wget for HEALTHCHECK; libgomp for TF; pillow uses zlib/libjpeg via wheels)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1 libglib2.0-0 \
+    wget \
  && rm -rf /var/lib/apt/lists/*
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    TF_CPP_MIN_LOG_LEVEL=2
 
 WORKDIR /app
 
-# Install only the runtime deps for the API
+# Install Python deps first (better caching)
 COPY requirements.api.txt .
 RUN pip install --no-cache-dir -r requirements.api.txt
 
-# copy from notebooks/api to /app/api
-COPY notebooks/api/ ./api/
+# Copy app code (make sure your model file is included below)
+COPY . .
 
+# Lightweight readiness probe (Render doesn’t require it, but it helps)
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:${PORT}/healthz || exit 1
 
-ENV MODEL_PATH=api/model/brain_mri_model.h5
-ENV THRESHOLD=0.05
-ENV PORT=8000
-
-EXPOSE 8000
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:8000", "api.app:app"]
+# IMPORTANT: Bind to $PORT (do NOT hard-code 8000)
+CMD ["sh", "-c", "gunicorn app:app -b 0.0.0.0:$PORT --workers 2 --threads 2"]
