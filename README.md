@@ -14,9 +14,12 @@ This repository contains a small Flask application for classifying brain MRI ima
 
 Build and run the container locally:
 
+Build and run the container locally:
+
 ```bash
 docker build -t brain-tumor-app .
 docker run -p 5000:5000 brain-tumor-app
+docker run -e PORT=5000 -p 5000:5000 brain-tumor-app
 ```
 
 Then visit `http://localhost:5000` in your browser.

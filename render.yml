@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: brain-tumor-api
+    env: docker
+    dockerfilePath: Dockerfile
+    autoDeploy: true
+    plan: starter
+    healthCheckPath: /health

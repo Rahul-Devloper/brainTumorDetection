@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Brain Tumor Detection</title>
+</head>
+<body>
+  <h1>Brain Tumor Detection</h1>
+  <form id="upload-form">
+    <input type="file" id="file-input" name="file" accept="image/*" required>
+    <button type="submit">Predict</button>
+  </form>
+  <pre id="result"></pre>
+  <script>
+    const form = document.getElementById('upload-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById('file-input');
+      const formData = new FormData();
+      if (fileInput.files.length === 0) {
+        return;
+      }
+      formData.append('file', fileInput.files[0]);
+      try {
+        const resp = await fetch('/predict', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await resp.json();
+        document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById('result').textContent = 'Error: ' + err;
+      }
+    });
+  </script>
+</body>
+</html>

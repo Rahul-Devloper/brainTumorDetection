@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import numpy as np
 import os
 import cv2
@@ -22,6 +22,10 @@ def preprocess(file_bytes):
     img = np.expand_dims(img, axis=(0, -1))  # (1,28,28,1)
     return img
 
+
+@app.get("/")
+def index():
+    return render_template("index.html")
 
 @app.get("/health")
 def health():
