@@ -20,7 +20,7 @@ COPY . .
 
 # Lightweight readiness probe (Render doesn’t require it, but it helps)
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:${PORT}/healthz || exit 1
+  CMD wget -qO- http://127.0.0.1:${PORT}/health || exit 1
 
 # IMPORTANT: Bind to $PORT (do NOT hard-code 8000)
-CMD ["sh", "-c", "gunicorn app:app -b 0.0.0.0:$PORT --workers 2 --threads 2"]
+CMD ["sh", "-c", "gunicorn notebooks.api.app:app -b 0.0.0.0:$PORT --workers 2 --threads 2"]
