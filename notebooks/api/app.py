@@ -3,13 +3,23 @@ import numpy as np
 import os
 import cv2
 import tensorflow as tf
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Model + threshold (can be overridden with env vars in Docker/cloud)
 MODEL_PATH = os.getenv("MODEL_PATH", "notebooks/api/model/brain_mri_model.h5")
 THRESHOLD = float(os.getenv("THRESHOLD", "0.05"))
 
 app = Flask(__name__)
+
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError(
+        f"Model file not found at {MODEL_PATH}. Set MODEL_PATH env var to the correct path."
+    )
+
 model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+
 
 
 def preprocess(file_bytes):

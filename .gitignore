@@ -32,3 +32,10 @@ Thumbs.db
 # zip files
 *.zip
 
+# env files
+*.env
+
+# test files
+test.py
+test1.py
+test_*.py
