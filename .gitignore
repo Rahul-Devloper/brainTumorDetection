@@ -12,9 +12,9 @@ venv/
 env/
 ENV/
 
-# Model files
-*.h5
-*.pkl
+# # Model files
+# *.h5
+# *.pkl
 
 # Dataset
 input/
