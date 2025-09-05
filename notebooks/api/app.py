@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 import numpy as np
 import os
+from pathlib import Path
 import cv2
 import tensorflow as tf
 from dotenv import load_dotenv
@@ -14,11 +15,19 @@ THRESHOLD = float(os.getenv("THRESHOLD", "0.05"))
 
 app = Flask(__name__)
 
+# Provide extra diagnostics when the model file is missing. This helps identify
+# the correct model path in remote deployment logs.
 if not os.path.exists(MODEL_PATH):
+    root = Path(__file__).resolve().parents[2]
+    candidates = [str(p) for p in root.rglob("brain_mri_model.h5")]
+    details = f"Model file not found at {MODEL_PATH}."
+    if candidates:
+        details += f" Found candidate paths: {candidates}."
+    else:
+        details += f" No brain_mri_model.h5 found under {root}."
     raise FileNotFoundError(
-        f"Model file not found at {MODEL_PATH}. Set MODEL_PATH env var to the correct path."
+        details + " Set MODEL_PATH env var to the correct path."
     )
-
 model = tf.keras.models.load_model(MODEL_PATH, compile=False)
 
 
