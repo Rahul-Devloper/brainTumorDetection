@@ -9,8 +9,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Model + threshold (can be overridden with env vars in Docker/cloud)
-MODEL_PATH = os.getenv(
-    "MODEL_PATH", "../notebooks/api/model/brain_mri_model.h5")
+DEFAULT_MODEL_PATH = Path(__file__).resolve().parent / \
+    "model" / "brain_mri_model.h5"
+MODEL_PATH = os.getenv("MODEL_PATH", str(DEFAULT_MODEL_PATH))
 THRESHOLD = float(os.getenv("THRESHOLD", "0.05"))
 
 app = Flask(__name__)
