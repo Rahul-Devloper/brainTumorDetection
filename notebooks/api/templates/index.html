@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Brain Tumor Detection</title>
 
-  <!-- Bootstrap 5 CSS via CDN -->
+  <!-- Bootstrap 5 CSS -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -16,14 +16,13 @@
   <!-- Your styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
 
-  {% if GTM_ID %}
-  <!-- Google Tag Manager + Consent Mode v2 -->
+  <!-- GA4 (gtag.js) with Consent Mode v2 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PNBLNQ7MDM"></script>
   <script>
-    // GTM/gtag shim + Consent defaults (deny until accepted)
     window.dataLayer = window.dataLayer || [];
     function gtag(){ dataLayer.push(arguments); }
 
-    // Default consent: analytics denied; security storage okay
+    // Default: deny analytics until user accepts
     gtag('consent','default',{
       ad_storage:'denied',
       analytics_storage:'denied',
@@ -31,27 +30,12 @@
       ad_personalization:'denied',
       security_storage:'granted'
     });
+
+    gtag('js', new Date());
+    gtag('config', 'G-PNBLNQ7MDM', { anonymize_ip: true, send_page_view: true });
   </script>
-  <script>
-    (function(w,d,s,l,i){
-      w[l]=w[l]||[];
-      w[l].push({'gtm.start': new Date().getTime(), event:'gtm.js'});
-      var f=d.getElementsByTagName(s)[0], j=d.createElement(s), dl=l!='dataLayer'?'&l='+l:'';
-      j.async=true; j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
-      f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','{{ GTM_ID }}');
-  </script>
-  {% endif %}
 </head>
 <body>
-  {% if GTM_ID %}
-  <!-- Google Tag Manager (noscript) — must be first element in <body> -->
-  <noscript>
-    <iframe src="https://www.googletagmanager.com/ns.html?id={{ GTM_ID }}"
-            height="0" width="0" style="display:none;visibility:hidden"></iframe>
-  </noscript>
-  {% endif %}
-
   <div class="container py-5">
     <div class="row justify-content-center">
       <div class="col-12 col-lg-10 col-xxl-8">
@@ -142,13 +126,13 @@
     </div>
   </div>
 
-  <!-- Bootstrap 5 JS (for toast, etc.) -->
+  <!-- Bootstrap 5 JS -->
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
     crossorigin="anonymous"></script>
 
-  <!-- Your scripts -->
+  <!-- App JS -->
   <script src="{{ url_for('static', filename='index.js') }}"></script>
 
   <hr class="my-4">
@@ -165,7 +149,6 @@
     </div>
   </footer>
 
-  {% if GTM_ID %}
   <!-- Minimal consent banner (analytics only) -->
   <div id="consent-banner" class="alert alert-dark position-fixed bottom-0 start-0 end-0 m-0 rounded-0 d-none" role="alert" style="z-index:1070;">
     <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -192,8 +175,6 @@
       function grant(){
         if (typeof gtag === 'function') {
           gtag('consent','update',{ analytics_storage:'granted' });
-        } else {
-          // GTM not ready yet — still store choice
         }
         localStorage.setItem(key,'granted');
         banner.classList.add('d-none');
@@ -214,6 +195,5 @@
       decline?.addEventListener('click', deny);
     })();
   </script>
-  {% endif %}
 </body>
 </html>

@@ -1,4 +1,3 @@
-// static/index.js
 'use strict'
 
 // ===== State =====
@@ -22,6 +21,11 @@ const confidenceBar = document.getElementById('confidence')
 const timingEl = document.getElementById('timing')
 const toastEl = document.getElementById('toast')
 const toast = new bootstrap.Toast(toastEl)
+
+// ===== GA helper =====
+function gaEvent(name, params) {
+  if (typeof gtag === 'function') gtag('event', name, params || {})
+}
 
 // ===== Config =====
 const MAX_MB = 10
@@ -60,7 +64,7 @@ function resetUI() {
 }
 
 // Validate + preview + enable button
-function fileChosen(file) {
+function fileChosen(file, via) {
   if (!file) return
 
   if (!file.type || !ACCEPTED.includes(file.type)) {
@@ -84,6 +88,13 @@ function fileChosen(file) {
   fileMetaEl.textContent = `${file.type || 'image'} • ${humanSize(file.size)}`
   previewWrap.classList.remove('d-none')
   predictBtn.disabled = false
+
+  // Analytics: user selected an image
+  gaEvent('select_image', {
+    via: via || 'unknown',
+    file_type: file.type || 'n/a',
+    file_size_kb: Math.round(file.size / 1024),
+  })
 }
 
 // ===== Events =====
@@ -110,11 +121,13 @@ dropzone.addEventListener('keydown', (e) => {
 })
 dropzone.addEventListener('drop', (e) => {
   const file = e.dataTransfer?.files?.[0]
-  fileChosen(file)
+  fileChosen(file, 'drag_drop')
 })
 
 // File picker
-fileInput.addEventListener('change', (e) => fileChosen(e.target.files[0]))
+fileInput.addEventListener('change', (e) =>
+  fileChosen(e.target.files[0], 'picker')
+)
 
 // Paste image from clipboard
 window.addEventListener('paste', (e) => {
@@ -123,7 +136,7 @@ window.addEventListener('paste', (e) => {
   )
   if (item) {
     const file = item.getAsFile()
-    fileChosen(file)
+    fileChosen(file, 'paste')
   }
 })
 
@@ -146,18 +159,18 @@ predictBtn.addEventListener('click', async () => {
   confidenceWrap.classList.add('d-none')
   timingEl.textContent = ''
 
-  const formData = new FormData()
-  formData.append('file', file)
+  // Analytics: prediction started
+  gaEvent('predict_started')
 
   const t0 = performance.now()
   try {
+    const formData = new FormData()
+    formData.append('file', file)
+
     const resp = await fetch('/predict', { method: 'POST', body: formData })
-    const t1 = performance.now()
-
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-    const data = await resp.json()
 
-    // Show raw JSON
+    const data = await resp.json()
     resultJson.textContent = JSON.stringify(data, null, 2)
 
     // Interpret common shapes
@@ -192,15 +205,24 @@ predictBtn.addEventListener('click', async () => {
       confidenceWrap.classList.remove('d-none')
     }
 
-    const serverMs =
-      typeof data.inference_ms === 'number' ? data.inference_ms : null
-    const clientMs = (performance.now() - t0).toFixed(0)
-    timingEl.textContent = serverMs
-      ? `Server: ${serverMs} ms • Round-trip: ${clientMs} ms`
-      : `Round-trip: ${clientMs} ms`
+    const clientMs = Math.round(performance.now() - t0)
+    timingEl.textContent = `Round-trip: ${clientMs} ms`
+
+    // Analytics: prediction succeeded
+    gaEvent('predict_success', {
+      label,
+      confidence_pct:
+        typeof score === 'number'
+          ? Math.round(Math.max(0, Math.min(1, score)) * 100)
+          : undefined,
+      roundtrip_ms: clientMs,
+    })
   } catch (err) {
     setBadge('Error', 'text-bg-danger')
     showToast('Prediction failed: ' + err.message)
+
+    // Analytics: prediction error
+    gaEvent('predict_error', { message: String(err.message || err) })
   } finally {
     spinner.classList.add('d-none')
     predictBtn.disabled = false
