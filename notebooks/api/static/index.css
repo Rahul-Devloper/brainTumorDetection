@@ -39,3 +39,6 @@ body {
 
 .small-muted { color: rgba(255,255,255,.6); font-size: .9rem; }
 code.inline { background: rgba(255,255,255,.08); padding: .15rem .35rem; border-radius: .35rem; }
+
+.app-footer a { text-decoration: underline; }
+.app-footer { opacity: .9; }
