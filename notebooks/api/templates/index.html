@@ -1,13 +1,6 @@
 <!doctype html>
 <html lang="en" data-bs-theme="dark">
 <head>
-  <!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-MRT3QQ6T');</script>
-<!-- End Google Tag Manager -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Brain Tumor Detection</title>
@@ -22,12 +15,43 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   <!-- Your styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+
+  {% if GTM_ID %}
+  <!-- Google Tag Manager + Consent Mode v2 -->
+  <script>
+    // GTM/gtag shim + Consent defaults (deny until accepted)
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+
+    // Default consent: analytics denied; security storage okay
+    gtag('consent','default',{
+      ad_storage:'denied',
+      analytics_storage:'denied',
+      ad_user_data:'denied',
+      ad_personalization:'denied',
+      security_storage:'granted'
+    });
+  </script>
+  <script>
+    (function(w,d,s,l,i){
+      w[l]=w[l]||[];
+      w[l].push({'gtm.start': new Date().getTime(), event:'gtm.js'});
+      var f=d.getElementsByTagName(s)[0], j=d.createElement(s), dl=l!='dataLayer'?'&l='+l:'';
+      j.async=true; j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+      f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','{{ GTM_ID }}');
+  </script>
+  {% endif %}
 </head>
 <body>
-   <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MRT3QQ6T"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
+  {% if GTM_ID %}
+  <!-- Google Tag Manager (noscript) — must be first element in <body> -->
+  <noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id={{ GTM_ID }}"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript>
+  {% endif %}
+
   <div class="container py-5">
     <div class="row justify-content-center">
       <div class="col-12 col-lg-10 col-xxl-8">
@@ -126,20 +150,70 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <!-- Your scripts -->
   <script src="{{ url_for('static', filename='index.js') }}"></script>
+
   <hr class="my-4">
+  <footer class="app-footer text-center small text-secondary">
+    <div>
+      <strong>Data source:</strong>
+      <a href="https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset"
+         target="_blank" rel="noopener noreferrer">
+        Brain Tumor MRI Dataset (Kaggle, Masoud Nickparvar)
+      </a>
+    </div>
+    <div>
+      For research/education only — <span class="fw-semibold">not a medical device</span>.
+    </div>
+  </footer>
 
-<footer class="app-footer text-center small text-secondary">
-  <div>
-    <strong>Data source:</strong>
-    <a href="https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset"
-       target="_blank" rel="noopener noreferrer">
-      Brain Tumor MRI Dataset (Kaggle, Masoud Nickparvar)
-    </a>
+  {% if GTM_ID %}
+  <!-- Minimal consent banner (analytics only) -->
+  <div id="consent-banner" class="alert alert-dark position-fixed bottom-0 start-0 end-0 m-0 rounded-0 d-none" role="alert" style="z-index:1070;">
+    <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <span>We use cookies for <strong>analytics only</strong>. No images or personal data are sent.</span>
+      <div class="d-flex gap-2">
+        <button id="consent-accept" class="btn btn-primary btn-sm">Allow analytics</button>
+        <button id="consent-decline" class="btn btn-outline-secondary btn-sm">Decline</button>
+      </div>
+    </div>
   </div>
-  <div>
-    For research/education only — <span class="fw-semibold">not a medical device</span>.
-  </div>
-</footer>
 
+  <script>
+    (function(){
+      // Respect Do Not Track
+      const dnt = navigator.doNotTrack === '1' || window.doNotTrack === '1';
+      if (dnt) return;
+
+      const key = 'analytics_consent_v1';
+      const saved = localStorage.getItem(key);
+      const banner = document.getElementById('consent-banner');
+      const accept = document.getElementById('consent-accept');
+      const decline = document.getElementById('consent-decline');
+
+      function grant(){
+        if (typeof gtag === 'function') {
+          gtag('consent','update',{ analytics_storage:'granted' });
+        } else {
+          // GTM not ready yet — still store choice
+        }
+        localStorage.setItem(key,'granted');
+        banner.classList.add('d-none');
+      }
+      function deny(){
+        if (typeof gtag === 'function') {
+          gtag('consent','update',{ analytics_storage:'denied' });
+        }
+        localStorage.setItem(key,'denied');
+        banner.classList.add('d-none');
+      }
+
+      if (!saved) banner.classList.remove('d-none');
+      if (saved === 'granted') grant();
+      if (saved === 'denied')  deny();
+
+      accept?.addEventListener('click', grant);
+      decline?.addEventListener('click', deny);
+    })();
+  </script>
+  {% endif %}
 </body>
 </html>

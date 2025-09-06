@@ -44,9 +44,12 @@ def preprocess(file_bytes):
     return img
 
 
+GTM_ID = os.getenv("GTM_ID")  # e.g., GTM-ABC1234
+
+
 @app.get("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", GTM_ID=GTM_ID)
 
 @app.get("/health")
 def health():
