@@ -15,25 +15,6 @@
 
   <!-- Your styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
-
-  <!-- GA4 (gtag.js) with Consent Mode v2 -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PNBLNQ7MDM"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){ dataLayer.push(arguments); }
-
-    // Default: deny analytics until user accepts
-    gtag('consent','default',{
-      ad_storage:'denied',
-      analytics_storage:'denied',
-      ad_user_data:'denied',
-      ad_personalization:'denied',
-      security_storage:'granted'
-    });
-
-    gtag('js', new Date());
-    gtag('config', 'G-PNBLNQ7MDM', { anonymize_ip: true, send_page_view: true });
-  </script>
 </head>
 <body>
   <div class="container py-5">
@@ -139,17 +120,17 @@
   <footer class="app-footer text-center small text-secondary">
     <div>
       <strong>Data source:</strong>
-      <a href="https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset"
-         target="_blank" rel="noopener noreferrer">
+      <a href="https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset" target="_blank" rel="noopener noreferrer">
         Brain Tumor MRI Dataset (Kaggle, Masoud Nickparvar)
       </a>
     </div>
     <div>
       For research/education only — <span class="fw-semibold">not a medical device</span>.
+      · <a href="#" id="cookie-settings" class="text-decoration-underline">Cookie settings</a>
     </div>
   </footer>
 
-  <!-- Minimal consent banner (analytics only) -->
+  <!-- Consent banner -->
   <div id="consent-banner" class="alert alert-dark position-fixed bottom-0 start-0 end-0 m-0 rounded-0 d-none" role="alert" style="z-index:1070;">
     <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2">
       <span>We use cookies for <strong>analytics only</strong>. No images or personal data are sent.</span>
@@ -160,40 +141,108 @@
     </div>
   </div>
 
+  <!-- Strict consent: GA loads only after user allows -->
   <script>
-    (function(){
-      // Respect Do Not Track
-      const dnt = navigator.doNotTrack === '1' || window.doNotTrack === '1';
-      if (dnt) return;
+  // ---- GA loader (injects GA4 only after consent is granted) ----
+  function loadGA() {
+    if (window.__gaLoaded) return;
+    window.__gaLoaded = true;
 
-      const key = 'analytics_consent_v1';
-      const saved = localStorage.getItem(key);
-      const banner = document.getElementById('consent-banner');
-      const accept = document.getElementById('consent-accept');
-      const decline = document.getElementById('consent-decline');
+    // Create dataLayer + gtag shim
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    window.gtag = gtag;
 
-      function grant(){
-        if (typeof gtag === 'function') {
-          gtag('consent','update',{ analytics_storage:'granted' });
-        }
-        localStorage.setItem(key,'granted');
-        banner.classList.add('d-none');
+    // Set Consent Mode defaults (still denied until we update)
+    gtag('consent','default',{
+      ad_storage:'denied',
+      analytics_storage:'denied',
+      ad_user_data:'denied',
+      ad_personalization:'denied',
+      security_storage:'granted'
+    });
+
+    // Load GA4 library
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-PNBLNQ7MDM';
+    s.onload = () => {
+      gtag('js', new Date());
+      // User already consented (we call loadGA only after accept)
+      gtag('consent','update',{ analytics_storage:'granted' });
+      gtag('config','G-PNBLNQ7MDM', { anonymize_ip: true, send_page_view: true });
+    };
+    document.head.appendChild(s);
+  }
+
+  // ---- Storage wrapper: localStorage → cookie → memory ----
+  const ConsentStore = (() => {
+    const KEY = 'analytics_consent_v1';
+    let mem = null;
+
+    const getCookie = (n) =>
+      document.cookie.split('; ').find(r => r.startsWith(n + '='))?.split('=')[1] || null;
+    const setCookie = (n,v,days=365) => {
+      document.cookie = `${n}=${v}; Max-Age=${days*86400}; Path=/; SameSite=Lax`;
+    };
+    const delCookie = (n) => { document.cookie = `${n}=; Max-Age=0; Path=/; SameSite=Lax`; };
+
+    try { localStorage.setItem('__probe__','1'); localStorage.removeItem('__probe__');
+      return { get:()=>localStorage.getItem(KEY), set:(v)=>localStorage.setItem(KEY,v), del:()=>localStorage.removeItem(KEY), where:'localStorage' };
+    } catch(e) {
+      try { setCookie('__probe__','1',1); delCookie('__probe__');
+        return { get:()=>getCookie(KEY), set:(v)=>setCookie(KEY,v), del:()=>delCookie(KEY), where:'cookie' };
+      } catch(e2) {
+        return { get:()=>mem, set:(v)=>{mem=v;}, del:()=>{mem=null;}, where:'memory' };
       }
-      function deny(){
-        if (typeof gtag === 'function') {
-          gtag('consent','update',{ analytics_storage:'denied' });
-        }
-        localStorage.setItem(key,'denied');
-        banner.classList.add('d-none');
-      }
+    }
+  })();
 
-      if (!saved) banner.classList.remove('d-none');
-      if (saved === 'granted') grant();
-      if (saved === 'denied')  deny();
+  // ---- Consent UI logic (runs after DOM ready) ----
+  document.addEventListener('DOMContentLoaded', () => {
+    const banner   = document.getElementById('consent-banner');
+    const accept   = document.getElementById('consent-accept');
+    const decline  = document.getElementById('consent-decline');
+    const settings = document.getElementById('cookie-settings');
 
-      accept?.addEventListener('click', grant);
-      decline?.addEventListener('click', deny);
-    })();
+    function showBanner(){ banner?.classList.remove('d-none'); }
+    function hideBanner(){ banner?.classList.add('d-none'); }
+
+    function grant(){
+      ConsentStore.set('granted');
+      hideBanner();
+      loadGA(); // GA loads only now
+    }
+    function deny(){
+      ConsentStore.set('denied');
+      hideBanner();
+      // GA not loaded at all
+    }
+
+    const saved = ConsentStore.get(); // "granted" | "denied" | null
+    if (saved === 'granted') {
+      loadGA();              // previously accepted → load immediately
+    } else if (saved === 'denied') {
+      // keep off; banner hidden
+    } else {
+      // No prior choice → show banner (even if DNT is on; change if desired)
+      showBanner();
+    }
+
+    accept?.addEventListener('click', (e) => { e.preventDefault(); grant(); });
+    decline?.addEventListener('click', (e) => { e.preventDefault(); deny(); });
+
+    // Cookie settings link: reopen banner & clear choice
+    settings?.addEventListener('click', (e) => {
+      e.preventDefault();
+      ConsentStore.del();
+      showBanner();
+    });
+
+    // Console helpers
+    window.consentGet = () => ConsentStore.get();
+    window.consentClear = () => ConsentStore.del();
+  });
   </script>
 </body>
 </html>

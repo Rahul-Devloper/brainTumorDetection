@@ -22,9 +22,11 @@ const timingEl = document.getElementById('timing')
 const toastEl = document.getElementById('toast')
 const toast = new bootstrap.Toast(toastEl)
 
-// ===== GA helper =====
+// ===== GA helper (no-op until GA is loaded after consent) =====
 function gaEvent(name, params) {
-  if (typeof gtag === 'function') gtag('event', name, params || {})
+  if (typeof window.gtag === 'function') {
+    window.gtag('event', name, params || {})
+  }
 }
 
 // ===== Config =====
@@ -89,7 +91,7 @@ function fileChosen(file, via) {
   previewWrap.classList.remove('d-none')
   predictBtn.disabled = false
 
-  // Analytics: user selected an image
+  // Analytics (fires only after consent/GA load)
   gaEvent('select_image', {
     via: via || 'unknown',
     file_type: file.type || 'n/a',
