@@ -1,16 +1,16 @@
 'use strict'
 
 /**
- * Full front-end logic for the MRI predictor UI.
- * - Robustly parses many response shapes, including YOURS:
+ * Full front-end logic for the MRI predictor UI with low-confidence messaging.
+ * - Works with your API shape:
  *   {
  *     "label_id": 1,
  *     "label_name": "tumor",
  *     "probability_tumor": 0.9479,
  *     "threshold": 0.05
  *   }
- * - Renders a clean verdict card (expects the "verdict hero" HTML I shared earlier).
- * - GA event calls are safe no-ops if GA isn't loaded.
+ * - Shows “Possible tumor (low confidence)” when confidence < 50%.
+ * - Subtitle displays p(tumor) and threshold when available.
  */
 
 /* ========================== State & Elements ========================== */
@@ -41,7 +41,7 @@ const resultJson = document.getElementById('result-json')
 
 // Toast
 const toastEl = document.getElementById('toast')
-const toast = new bootstrap.Toast(toastEl)
+const toast = toastEl ? new bootstrap.Toast(toastEl) : null
 
 /* ============================== Config =============================== */
 const MAX_MB = 10
@@ -55,6 +55,7 @@ function gaEvent(name, params) {
 
 /* ============================= Helpers ============================== */
 function showToast(msg) {
+  if (!toast) return alert(msg)
   document.getElementById('toast-msg').textContent = msg
   toast.show()
 }
@@ -128,11 +129,8 @@ function decideTumorByText(labelNorm) {
  *  - labelNorm (normalized string)
  *  - isTumor (true/false/null)
  *  - confPct (0..100 or null)
- *
- * Special handling for:
- * - label_name, label_id
- * - probability_tumor (flip to 1-p for no_tumor cases)
- * - threshold (if provided, used when label is ambiguous)
+ *  - pTumorPct (0..100 or null)
+ *  - thresholdPct (0..100 or null)
  */
 function interpretPrediction(data) {
   let labelText = null
@@ -140,6 +138,10 @@ function interpretPrediction(data) {
   let isTumor = null
   let confPct = null
   let bestFromScores = null
+
+  // expose p(tumor) and threshold (both as % integers)
+  let pTumorPct = null
+  let thresholdPct = null
 
   // --- Primary: label_name ---
   if (typeof data?.label_name === 'string' && data.label_name.length) {
@@ -288,7 +290,6 @@ function interpretPrediction(data) {
       data?.prob_tumor ??
       data?.p_tumor
   )
-  // If only a "no tumor" prob is given, flip it.
   if (pTumor == null) {
     const pNoTumor = fromMaybeStringNumber(
       data?.probability_no_tumor ??
@@ -302,10 +303,18 @@ function interpretPrediction(data) {
     }
   }
 
-  const threshold = fromMaybeStringNumber(data?.threshold) // e.g., 0.05
+  // normalize to 0..1, then to %
   if (pTumor != null) {
-    const pPct = pTumor <= 1 ? pTumor * 100 : Math.min(100, pTumor)
+    const p = Math.max(0, Math.min(1, pTumor > 1 ? pTumor / 100 : pTumor))
+    pTumorPct = Math.round(p * 100)
+  }
 
+  const thr = fromMaybeStringNumber(data?.threshold)
+  if (thr != null) {
+    thresholdPct = Math.round(thr <= 1 ? thr * 100 : Math.min(100, thr))
+  }
+
+  if (pTumorPct != null) {
     const negAliases = new Set([
       'no tumor',
       'no tumour',
@@ -321,41 +330,36 @@ function interpretPrediction(data) {
       : null
 
     if (labelSaysTumor === true || isTumor === true) {
-      // Label indicates tumor → use p(tumor)
-      confPct = pPct
+      confPct = pTumorPct
     } else if (labelSaysTumor === false || isTumor === false) {
-      // Label indicates no tumor → use 1 - p(tumor)
-      confPct = Math.max(0, Math.min(100, 100 - pPct))
-    } else if (typeof threshold === 'number' && Number.isFinite(threshold)) {
-      // Use threshold if provided (compare against pTumor)
-      const thrPct = threshold <= 1 ? threshold * 100 : threshold
-      if (pPct >= thrPct) {
+      confPct = 100 - pTumorPct
+    } else if (thr != null) {
+      if (pTumorPct >= thresholdPct) {
         isTumor = true
-        confPct = pPct
+        confPct = pTumorPct
         if (!labelText) {
           labelText = 'tumor'
           labelNorm = 'tumor'
         }
       } else {
         isTumor = false
-        confPct = 100 - pPct
+        confPct = 100 - pTumorPct
         if (!labelText) {
           labelText = 'no_tumor'
           labelNorm = 'no tumor'
         }
       }
     } else {
-      // No clear label or threshold → decide by majority probability
-      if (pPct >= 50) {
+      if (pTumorPct >= 50) {
         isTumor = true
-        confPct = pPct
+        confPct = pTumorPct
         if (!labelText) {
           labelText = 'tumor'
           labelNorm = 'tumor'
         }
       } else {
         isTumor = false
-        confPct = 100 - pPct
+        confPct = 100 - pTumorPct
         if (!labelText) {
           labelText = 'no_tumor'
           labelNorm = 'no tumor'
@@ -364,7 +368,6 @@ function interpretPrediction(data) {
     }
   }
 
-  // If still unknown, try text-based decision
   if (isTumor === null && labelNorm) {
     const decided = decideTumorByText(labelNorm)
     if (decided !== null) isTumor = decided
@@ -373,8 +376,10 @@ function interpretPrediction(data) {
   return {
     labelText: labelText || 'Prediction',
     labelNorm: labelNorm || '',
-    isTumor, // true/false/null
-    confPct: confPct != null ? Math.round(confPct) : null, // 0..100
+    isTumor,
+    confPct: confPct != null ? Math.round(confPct) : null,
+    pTumorPct,
+    thresholdPct,
   }
 }
 
@@ -505,7 +510,9 @@ predictBtn.addEventListener('click', async () => {
     // Optional: keep raw JSON for debugging
     if (resultJson) resultJson.textContent = JSON.stringify(data, null, 2)
 
-    const { labelText, labelNorm, isTumor, confPct } = interpretPrediction(data)
+    // Interpret response
+    const { labelText, labelNorm, isTumor, confPct, pTumorPct, thresholdPct } =
+      interpretPrediction(data)
 
     // Latency
     const clientMs = Math.round(performance.now() - t0)
@@ -533,11 +540,20 @@ predictBtn.addEventListener('click', async () => {
       </svg>`
 
     heroIcon.innerHTML = verdictIsTumor ? alertSvg : checkSvg
-    heroTitle.textContent = verdictIsTumor
-      ? 'Tumor detected'
-      : 'No tumor detected'
 
-    // Subtitle: subtype if present in label
+    // Low-confidence messaging
+    const lowConf = confPct != null && confPct < 50
+    if (verdictIsTumor && lowConf) {
+      heroTitle.textContent = 'Possible tumor (low confidence)'
+    } else if (!verdictIsTumor && lowConf) {
+      heroTitle.textContent = 'Possibly no tumor (low confidence)'
+    } else {
+      heroTitle.textContent = verdictIsTumor
+        ? 'Tumor detected'
+        : 'No tumor detected'
+    }
+
+    // Subtitle: show p(tumor) and threshold when available; else subtype/label
     const subtype = [
       'glioma',
       'meningioma',
@@ -547,7 +563,15 @@ predictBtn.addEventListener('click', async () => {
       'astrocytoma',
       'oligodendroglioma',
     ].find((k) => labelNorm.includes(k))
-    heroSubtitle.textContent = subtype
+
+    const extras = []
+    if (typeof pTumorPct === 'number') extras.push(`p(tumor): ${pTumorPct}%`)
+    if (typeof thresholdPct === 'number')
+      extras.push(`threshold: ${thresholdPct}%`)
+
+    heroSubtitle.textContent = extras.length
+      ? extras.join(' • ')
+      : subtype
       ? `Subtype: ${ucfirst(subtype)}`
       : labelText && labelText !== 'Prediction'
       ? `Model label: ${labelText}`
@@ -565,6 +589,8 @@ predictBtn.addEventListener('click', async () => {
       label: labelText,
       is_tumor: verdictIsTumor,
       confidence_pct: confPct ?? undefined,
+      p_tumor_pct: pTumorPct ?? undefined,
+      threshold_pct: thresholdPct ?? undefined,
       roundtrip_ms: clientMs,
     })
 
