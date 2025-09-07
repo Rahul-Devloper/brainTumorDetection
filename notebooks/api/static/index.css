@@ -42,3 +42,71 @@ code.inline { background: rgba(255,255,255,.08); padding: .15rem .35rem; border-
 
 .app-footer a { text-decoration: underline; }
 .app-footer { opacity: .9; }
+
+
+/* Verdict hero styles */
+.result-hero {
+  border-radius: 1rem;
+  padding: 1rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.result-hero.good {
+  background:
+    radial-gradient(600px 200px at -10% -40%, rgba(34,197,94,.25), transparent 70%),
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border-color: rgba(34,197,94,.35);
+}
+.result-hero.bad {
+  background:
+    radial-gradient(600px 200px at -10% -40%, rgba(239,68,68,.25), transparent 70%),
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border-color: rgba(239,68,68,.35);
+}
+
+.result-hero-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.hero-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,.08);
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+  transform: scale(1);
+  transition: transform .18s ease;
+}
+.result-hero.good .hero-icon { background: rgba(34,197,94,.18); }
+.result-hero.bad  .hero-icon { background: rgba(239,68,68,.18); }
+.result-hero:hover .hero-icon { transform: scale(1.02); }
+
+.hero-title {
+  margin: 0;
+  font-weight: 700;
+}
+.result-hero.good .hero-title { color: #34d399; } /* emerald-400 */
+.result-hero.bad  .hero-title { color: #f87171; } /* red-400 */
+
+.hero-subtitle { opacity: .85; }
+
+.result-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: .75rem;
+}
+.metric {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: .75rem;
+  padding: .75rem .9rem;
+}
+.metric-label { font-size: .8rem; color: rgba(255,255,255,.7); }
+.metric-value { font-size: 1.05rem; font-weight: 600; }
+
+.badge, .progress { display: none !important; } /* hide old widgets if any */

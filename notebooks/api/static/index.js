@@ -14,19 +14,26 @@ const predictBtn = document.getElementById('predict-btn')
 const spinner = document.getElementById('spinner')
 const clearBtn = document.getElementById('clear-btn')
 const resultCard = document.getElementById('result-card')
+
+// New verdict elements
+const resultHero = document.getElementById('result-hero')
+const heroIcon = document.getElementById('hero-icon')
+const heroTitle = document.getElementById('hero-title')
+const heroSubtitle = document.getElementById('hero-subtitle')
+const metricConfidence = document.getElementById('metric-confidence')
+const metricLatency = document.getElementById('metric-latency')
+
+// Optional debug
+const debugDetails = document.getElementById('debug-details')
 const resultJson = document.getElementById('result-json')
-const badge = document.getElementById('badge')
-const confidenceWrap = document.getElementById('confidence-wrap')
-const confidenceBar = document.getElementById('confidence')
-const timingEl = document.getElementById('timing')
+
 const toastEl = document.getElementById('toast')
 const toast = new bootstrap.Toast(toastEl)
 
-// ===== GA helper (no-op until GA is loaded after consent) =====
+// ===== GA helper (safe no-op if GA not loaded) =====
 function gaEvent(name, params) {
-  if (typeof window.gtag === 'function') {
+  if (typeof window.gtag === 'function')
     window.gtag('event', name, params || {})
-  }
 }
 
 // ===== Config =====
@@ -38,18 +45,11 @@ function showToast(msg) {
   document.getElementById('toast-msg').textContent = msg
   toast.show()
 }
-
 function humanSize(bytes) {
   const i = Math.floor(Math.log(bytes) / Math.log(1024))
   const sizes = ['B', 'KB', 'MB', 'GB']
   return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i]
 }
-
-function setBadge(label, kind) {
-  badge.className = 'badge rounded-pill ' + (kind || 'text-bg-secondary')
-  badge.textContent = label
-}
-
 function resetUI() {
   selectedFile = null
   fileInput.value = ''
@@ -57,12 +57,16 @@ function resetUI() {
   previewImg.src = ''
   fileNameEl.textContent = ''
   fileMetaEl.textContent = ''
-  predictBtn.disabled = true
   resultCard.classList.add('d-none')
-  confidenceWrap.classList.add('d-none')
-  confidenceBar.style.width = '0%'
-  confidenceBar.textContent = '0%'
-  timingEl.textContent = ''
+  resultHero.classList.add('d-none')
+  resultHero.classList.remove('good', 'bad')
+  heroIcon.innerHTML = ''
+  heroTitle.textContent = '—'
+  heroSubtitle.textContent = '—'
+  metricConfidence.textContent = '—'
+  metricLatency.textContent = '—'
+  if (resultJson) resultJson.textContent = ''
+  debugDetails?.classList.add('d-none')
 }
 
 // Validate + preview + enable button
@@ -91,7 +95,6 @@ function fileChosen(file, via) {
   previewWrap.classList.remove('d-none')
   predictBtn.disabled = false
 
-  // Analytics (fires only after consent/GA load)
   gaEvent('select_image', {
     via: via || 'unknown',
     file_type: file.type || 'n/a',
@@ -100,13 +103,10 @@ function fileChosen(file, via) {
 }
 
 // ===== Events =====
-// Open file dialog
 dropzone.addEventListener('click', () => fileInput.click())
 dropzone.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') fileInput.click()
 })
-
-// Drag&Drop styling + file selection
 ;['dragenter', 'dragover'].forEach((evt) => {
   dropzone.addEventListener(evt, (e) => {
     e.preventDefault()
@@ -125,27 +125,18 @@ dropzone.addEventListener('drop', (e) => {
   const file = e.dataTransfer?.files?.[0]
   fileChosen(file, 'drag_drop')
 })
-
-// File picker
 fileInput.addEventListener('change', (e) =>
   fileChosen(e.target.files[0], 'picker')
 )
-
-// Paste image from clipboard
 window.addEventListener('paste', (e) => {
   const item = [...e.clipboardData.items].find((i) =>
     i.type.startsWith('image/')
   )
-  if (item) {
-    const file = item.getAsFile()
-    fileChosen(file, 'paste')
-  }
+  if (item) fileChosen(item.getAsFile(), 'paste')
 })
-
-// Clear UI
 clearBtn.addEventListener('click', resetUI)
 
-// Predict
+// ===== Predict =====
 predictBtn.addEventListener('click', async () => {
   const file = selectedFile
   if (!file) {
@@ -155,13 +146,10 @@ predictBtn.addEventListener('click', async () => {
 
   predictBtn.disabled = true
   spinner.classList.remove('d-none')
-  setBadge('Predicting…', 'text-bg-warning')
   resultCard.classList.remove('d-none')
-  resultJson.textContent = ''
-  confidenceWrap.classList.add('d-none')
-  timingEl.textContent = ''
+  resultHero.classList.add('d-none')
+  debugDetails?.classList.add('d-none')
 
-  // Analytics: prediction started
   gaEvent('predict_started')
 
   const t0 = performance.now()
@@ -171,59 +159,99 @@ predictBtn.addEventListener('click', async () => {
 
     const resp = await fetch('/predict', { method: 'POST', body: formData })
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-
     const data = await resp.json()
-    resultJson.textContent = JSON.stringify(data, null, 2)
 
-    // Interpret common shapes
-    const label =
-      'prediction' in data
-        ? data.prediction === 1
+    // --- Optional: keep raw for debugging, but hidden ---
+    if (resultJson) resultJson.textContent = JSON.stringify(data, null, 2)
+
+    // --- Interpret common shapes ---
+    // label: "Tumor" / "No Tumor" / or subtype
+    let labelText = 'Prediction'
+    if ('prediction' in data) {
+      labelText =
+        data.prediction === 1 ||
+        String(data.prediction).toLowerCase() === 'tumor'
           ? 'Tumor'
           : 'No Tumor'
-        : 'label' in data
-        ? String(data.label).toLowerCase().includes('tumor')
-          ? 'Tumor'
-          : 'No Tumor'
-        : 'Prediction'
-
-    const score =
-      typeof data.score === 'number'
-        ? data.score
-        : typeof data.confidence === 'number'
-        ? data.confidence
-        : typeof data.probability === 'number'
-        ? data.probability
-        : null
-
-    if (label === 'Tumor') setBadge('Tumor', 'text-bg-danger')
-    else if (label === 'No Tumor') setBadge('No Tumor', 'text-bg-success')
-    else setBadge(label, 'text-bg-info')
-
-    if (score !== null && !Number.isNaN(score)) {
-      const pct = Math.round(Math.max(0, Math.min(1, score)) * 100)
-      confidenceBar.style.width = pct + '%'
-      confidenceBar.textContent = pct + '%'
-      confidenceWrap.classList.remove('d-none')
+    } else if ('label' in data) {
+      labelText = String(data.label)
+    } else if ('class' in data) {
+      labelText = String(data.class)
     }
 
-    const clientMs = Math.round(performance.now() - t0)
-    timingEl.textContent = `Round-trip: ${clientMs} ms`
+    // confidence
+    let score = null
+    if (typeof data.score === 'number') score = data.score
+    else if (typeof data.confidence === 'number') score = data.confidence
+    else if (typeof data.probability === 'number') score = data.probability
 
-    // Analytics: prediction succeeded
+    const pct =
+      score !== null && !Number.isNaN(score)
+        ? Math.round(Math.max(0, Math.min(1, score)) * 100)
+        : null
+
+    // latency (prefer server time if provided)
+    const clientMs = Math.round(performance.now() - t0)
+    const serverMs =
+      typeof data.inference_ms === 'number' ? data.inference_ms : null
+
+    // --- Decide verdict ---
+    const labelLower = labelText.trim().toLowerCase()
+    const isTumor =
+      (labelLower.includes('tumor') && !labelLower.includes('no tumor')) ||
+      [
+        'glioma',
+        'meningioma',
+        'pituitary',
+        'pituitary_tumor',
+        'gbm',
+        'lgg',
+      ].some((k) => labelLower.includes(k))
+
+    // --- Render verdict hero ---
+    resultHero.classList.remove('good', 'bad')
+    resultHero.classList.add(isTumor ? 'bad' : 'good')
+
+    // Icon SVGs
+    const checkSvg = `
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="11" stroke="currentColor" opacity=".25"></circle>
+        <path d="M7 12.5l3.2 3.2L17 9.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`
+    const alertSvg = `
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="11" stroke="currentColor" opacity=".25"></circle>
+        <path d="M12 7v6M12 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`
+
+    heroIcon.innerHTML = isTumor ? alertSvg : checkSvg
+    heroTitle.textContent = isTumor ? 'Tumor detected' : 'No tumor detected'
+
+    // Subtitle: show subtype if present, else neutral text
+    const subtype = ['glioma', 'meningioma', 'pituitary', 'gbm', 'lgg'].find(
+      (k) => labelLower.includes(k)
+    )
+    heroSubtitle.textContent = subtype
+      ? `Subtype: ${subtype.charAt(0).toUpperCase() + subtype.slice(1)}`
+      : labelText && labelText !== 'Prediction'
+      ? `Model label: ${labelText}`
+      : 'Model result'
+
+    metricConfidence.textContent = pct !== null ? `${pct}%` : '—'
+    metricLatency.textContent = serverMs
+      ? `${serverMs} ms (server)`
+      : `${clientMs} ms (round-trip)`
+
+    resultHero.classList.remove('d-none')
+
     gaEvent('predict_success', {
-      label,
-      confidence_pct:
-        typeof score === 'number'
-          ? Math.round(Math.max(0, Math.min(1, score)) * 100)
-          : undefined,
+      label: labelText,
+      confidence_pct: pct ?? undefined,
       roundtrip_ms: clientMs,
     })
   } catch (err) {
-    setBadge('Error', 'text-bg-danger')
     showToast('Prediction failed: ' + err.message)
-
-    // Analytics: prediction error
+    resultHero.classList.add('d-none')
     gaEvent('predict_error', { message: String(err.message || err) })
   } finally {
     spinner.classList.add('d-none')

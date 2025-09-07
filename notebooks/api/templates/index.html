@@ -1,248 +1,416 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Brain Tumor Detection</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Brain Tumor Detection</title>
 
-  <!-- Bootstrap 5 CSS -->
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-    crossorigin="anonymous"
-  />
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
 
-  <!-- Your styles -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
-</head>
-<body>
-  <div class="container py-5">
-    <div class="row justify-content-center">
-      <div class="col-12 col-lg-10 col-xxl-8">
-        <div class="text-center mb-4">
-          <h1 class="display-6 fw-semibold brand-gradient">Brain Tumor Detection</h1>
-          <p class="small-muted mb-0">Upload an MRI image to get a prediction from the model.</p>
-        </div>
+    <!-- Your styles -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='index.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-10 col-xxl-8">
+          <div class="text-center mb-4">
+            <h1 class="display-6 fw-semibold brand-gradient">
+              Brain Tumor Detection
+            </h1>
+            <p class="small-muted mb-0">
+              Upload an MRI image to get a prediction from the model.
+            </p>
+          </div>
 
-        <div class="card shadow-lg border-0 rounded-4">
-          <div class="card-body p-4 p-md-5">
-
-            <!-- Upload / Drop area -->
-            <div id="dropzone" class="dropzone mb-3" tabindex="0" role="button" aria-label="Upload MRI image">
-              <div class="mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" fill="currentColor" class="bi bi-cloud-arrow-up mb-2" viewBox="0 0 16 16" aria-hidden="true">
-                  <path fill-rule="evenodd" d="M8 0a5.53 5.53 0 0 0-5.2 3.306A4.002 4.002 0 0 0 4 11h3v-.5a.5.5 0 0 1 1 0V11h3a3 3 0 1 0-.176-5.995A5.53 5.53 0 0 0 8 0z"/>
-                  <path d="M7.5 10.5a.5.5 0 0 1 1 0V14l1.5-1.5a.5.5 0 0 1 .707.707l-2.5 2.5a.5.5 0 0 1-.707 0l-2.5-2.5a.5.5 0 1 1 .707-.707L7.5 14v-3.5z"/>
-                </svg>
-              </div>
-              <p class="mb-1">Drag &amp; drop an image here, or <span class="text-primary text-decoration-underline">browse</span></p>
-              <p class="text-secondary small mb-0">Accepted: JPG, PNG. Max 10 MB.</p>
-              <input id="file-input" type="file" accept="image/*" class="d-none" />
-            </div>
-
-            <!-- Preview -->
-            <div id="preview-wrap" class="mb-4 d-none">
-              <div class="d-flex align-items-center gap-3">
-                <img id="preview-img" class="preview-img" alt="Selected MRI preview" />
-                <div>
-                  <div class="fw-semibold" id="file-name"></div>
-                  <div class="text-secondary small" id="file-meta"></div>
+          <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-body p-4 p-md-5">
+              <!-- Upload / Drop area -->
+              <div
+                id="dropzone"
+                class="dropzone mb-3"
+                tabindex="0"
+                role="button"
+                aria-label="Upload MRI image"
+              >
+                <div class="mb-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="42"
+                    height="42"
+                    fill="currentColor"
+                    class="bi bi-cloud-arrow-up mb-2"
+                    viewBox="0 0 16 16"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M8 0a5.53 5.53 0 0 0-5.2 3.306A4.002 4.002 0 0 0 4 11h3v-.5a.5.5 0 0 1 1 0V11h3a3 3 0 1 0-.176-5.995A5.53 5.53 0 0 0 8 0z"
+                    />
+                    <path
+                      d="M7.5 10.5a.5.5 0 0 1 1 0V14l1.5-1.5a.5.5 0 0 1 .707.707l-2.5 2.5a.5.5 0 0 1-.707 0l-2.5-2.5a.5.5 0 1 1 .707-.707L7.5 14v-3.5z"
+                    />
+                  </svg>
                 </div>
+                <p class="mb-1">
+                  Drag &amp; drop an image here, or
+                  <span class="text-primary text-decoration-underline"
+                    >browse</span
+                  >
+                </p>
+                <p class="text-secondary small mb-0">
+                  Accepted: JPG, PNG. Max 10 MB.
+                </p>
+                <input
+                  id="file-input"
+                  type="file"
+                  accept="image/*"
+                  class="d-none"
+                />
               </div>
-            </div>
 
-            <!-- Actions -->
-            <div class="d-flex flex-wrap gap-2">
-              <button id="predict-btn" class="btn btn-primary px-4" disabled>
-                <span class="spinner-border spinner-border-sm me-2 d-none" id="spinner" role="status" aria-hidden="true"></span>
-                Predict
-              </button>
-              <button id="clear-btn" class="btn btn-outline-secondary">Clear</button>
-            </div>
-
-            <hr class="my-4">
-
-            <!-- Result -->
-            <div id="result-card" class="card border-0 bg-body-tertiary d-none">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <h5 class="card-title mb-0">Result</h5>
-                  <span id="badge" class="badge rounded-pill text-bg-secondary">Pending</span>
-                </div>
-                <div id="result-json" class="small" style="white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;"></div>
-
-                <div id="confidence-wrap" class="mt-3 d-none">
-                  <label for="confidence" class="form-label mb-1">Confidence</label>
-                  <div class="progress" role="progressbar" aria-label="Model confidence">
-                    <div id="confidence" class="progress-bar" style="width: 0%;">0%</div>
+              <!-- Preview -->
+              <div id="preview-wrap" class="mb-4 d-none">
+                <div class="d-flex align-items-center gap-3">
+                  <img
+                    id="preview-img"
+                    class="preview-img"
+                    alt="Selected MRI preview"
+                  />
+                  <div>
+                    <div class="fw-semibold" id="file-name"></div>
+                    <div class="text-secondary small" id="file-meta"></div>
                   </div>
                 </div>
-
-                <div id="timing" class="text-secondary small mt-2"></div>
               </div>
-            </div>
 
-            <!-- Toast -->
-            <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
-              <div id="toast" class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                  <div class="toast-body" id="toast-msg">An error occurred.</div>
-                  <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+              <!-- Actions -->
+              <div class="d-flex flex-wrap gap-2">
+                <button id="predict-btn" class="btn btn-primary px-4" disabled>
+                  <span
+                    class="spinner-border spinner-border-sm me-2 d-none"
+                    id="spinner"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  Predict
+                </button>
+                <button id="clear-btn" class="btn btn-outline-secondary">
+                  Clear
+                </button>
+              </div>
+
+              <hr class="my-4" />
+
+              <!-- Result -->
+              <!-- Result (polished) -->
+              <div
+                id="result-card"
+                class="card border-0 bg-body-tertiary d-none"
+              >
+                <div class="card-body">
+                  <!-- Verdict hero -->
+                  <div id="result-hero" class="result-hero d-none">
+                    <div class="result-hero-inner">
+                      <div
+                        id="hero-icon"
+                        class="hero-icon"
+                        aria-hidden="true"
+                      ></div>
+                      <div>
+                        <h3 id="hero-title" class="hero-title mb-1">—</h3>
+                        <div
+                          id="hero-subtitle"
+                          class="hero-subtitle small text-secondary"
+                        >
+                          —
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="result-metrics mt-3">
+                      <div class="metric">
+                        <div class="metric-label">Confidence</div>
+                        <div id="metric-confidence" class="metric-value">—</div>
+                      </div>
+                      <div class="metric">
+                        <div class="metric-label">Latency</div>
+                        <div id="metric-latency" class="metric-value">—</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Optional: collapsible raw JSON for debugging (hidden by default) -->
+                  <details id="debug-details" class="d-none mt-3">
+                    <summary class="small text-secondary">
+                      Show raw response
+                    </summary>
+                    <pre
+                      id="result-json"
+                      class="small mt-2"
+                      style="
+                        white-space: pre-wrap;
+                        font-family: ui-monospace, SFMono-Regular, Menlo,
+                          Consolas, monospace;
+                      "
+                    ></pre>
+                  </details>
                 </div>
               </div>
+
+              <!-- Toast -->
+              <div
+                class="position-fixed bottom-0 end-0 p-3"
+                style="z-index: 1080"
+              >
+                <div
+                  id="toast"
+                  class="toast align-items-center text-bg-danger border-0"
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                >
+                  <div class="d-flex">
+                    <div class="toast-body" id="toast-msg">
+                      An error occurred.
+                    </div>
+                    <button
+                      type="button"
+                      class="btn-close btn-close-white me-2 m-auto"
+                      data-bs-dismiss="toast"
+                      aria-label="Close"
+                    ></button>
+                  </div>
+                </div>
+              </div>
+
+              <p class="small text-secondary mt-4 mb-0">
+                Tip: You can also
+                <span class="text-decoration-underline">paste</span> an image
+                from clipboard while the page is focused.
+              </p>
             </div>
-
-            <p class="small text-secondary mt-4 mb-0">
-              Tip: You can also <span class="text-decoration-underline">paste</span> an image from clipboard while the page is focused.
-            </p>
-
           </div>
+
+          <p class="text-center small text-secondary mt-3 mb-0">
+            API endpoint: <code class="inline">/predict</code>
+          </p>
         </div>
-
-        <p class="text-center small text-secondary mt-3 mb-0">
-          API endpoint: <code class="inline">/predict</code>
-        </p>
       </div>
     </div>
-  </div>
 
-  <!-- Bootstrap 5 JS -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-    crossorigin="anonymous"></script>
+    <!-- Bootstrap 5 JS -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
 
-  <!-- App JS -->
-  <script src="{{ url_for('static', filename='index.js') }}"></script>
+    <!-- App JS -->
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
 
-  <hr class="my-4">
-  <footer class="app-footer text-center small text-secondary">
-    <div>
-      <strong>Data source:</strong>
-      <a href="https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset" target="_blank" rel="noopener noreferrer">
-        Brain Tumor MRI Dataset (Kaggle, Masoud Nickparvar)
-      </a>
-    </div>
-    <div>
-      For research/education only — <span class="fw-semibold">not a medical device</span>.
-      · <a href="#" id="cookie-settings" class="text-decoration-underline">Cookie settings</a>
-    </div>
-  </footer>
+    <hr class="my-4" />
+    <footer class="app-footer text-center small text-secondary">
+      <div>
+        <strong>Data source:</strong>
+        <a
+          href="https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Brain Tumor MRI Dataset (Kaggle, Masoud Nickparvar)
+        </a>
+      </div>
+      <div>
+        For research/education only —
+        <span class="fw-semibold">not a medical device</span>. ·
+        <a href="#" id="cookie-settings" class="text-decoration-underline"
+          >Cookie settings</a
+        >
+      </div>
+    </footer>
 
-  <!-- Consent banner -->
-  <div id="consent-banner" class="alert alert-dark position-fixed bottom-0 start-0 end-0 m-0 rounded-0 d-none" role="alert" style="z-index:1070;">
-    <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2">
-      <span>We use cookies for <strong>analytics only</strong>. No images or personal data are sent.</span>
-      <div class="d-flex gap-2">
-        <button id="consent-accept" class="btn btn-primary btn-sm">Allow analytics</button>
-        <button id="consent-decline" class="btn btn-outline-secondary btn-sm">Decline</button>
+    <!-- Consent banner -->
+    <div
+      id="consent-banner"
+      class="alert alert-dark position-fixed bottom-0 start-0 end-0 m-0 rounded-0 d-none"
+      role="alert"
+      style="z-index: 1070"
+    >
+      <div
+        class="container d-flex flex-wrap align-items-center justify-content-between gap-2"
+      >
+        <span
+          >We use cookies for <strong>analytics only</strong>. No images or
+          personal data are sent.</span
+        >
+        <div class="d-flex gap-2">
+          <button id="consent-accept" class="btn btn-primary btn-sm">
+            Allow analytics
+          </button>
+          <button id="consent-decline" class="btn btn-outline-secondary btn-sm">
+            Decline
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Strict consent: GA loads only after user allows -->
-  <script>
-  // ---- GA loader (injects GA4 only after consent is granted) ----
-  function loadGA() {
-    if (window.__gaLoaded) return;
-    window.__gaLoaded = true;
+    <!-- Strict consent: GA loads only after user allows -->
+    <script>
+      // ---- GA loader (injects GA4 only after consent is granted) ----
+      function loadGA() {
+        if (window.__gaLoaded) return
+        window.__gaLoaded = true
 
-    // Create dataLayer + gtag shim
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){ dataLayer.push(arguments); }
-    window.gtag = gtag;
+        // Create dataLayer + gtag shim
+        window.dataLayer = window.dataLayer || []
+        function gtag() {
+          dataLayer.push(arguments)
+        }
+        window.gtag = gtag
 
-    // Set Consent Mode defaults (still denied until we update)
-    gtag('consent','default',{
-      ad_storage:'denied',
-      analytics_storage:'denied',
-      ad_user_data:'denied',
-      ad_personalization:'denied',
-      security_storage:'granted'
-    });
+        // Set Consent Mode defaults (still denied until we update)
+        gtag('consent', 'default', {
+          ad_storage: 'denied',
+          analytics_storage: 'denied',
+          ad_user_data: 'denied',
+          ad_personalization: 'denied',
+          security_storage: 'granted',
+        })
 
-    // Load GA4 library
-    const s = document.createElement('script');
-    s.async = true;
-    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-PNBLNQ7MDM';
-    s.onload = () => {
-      gtag('js', new Date());
-      // User already consented (we call loadGA only after accept)
-      gtag('consent','update',{ analytics_storage:'granted' });
-      gtag('config','G-PNBLNQ7MDM', { anonymize_ip: true, send_page_view: true });
-    };
-    document.head.appendChild(s);
-  }
-
-  // ---- Storage wrapper: localStorage → cookie → memory ----
-  const ConsentStore = (() => {
-    const KEY = 'analytics_consent_v1';
-    let mem = null;
-
-    const getCookie = (n) =>
-      document.cookie.split('; ').find(r => r.startsWith(n + '='))?.split('=')[1] || null;
-    const setCookie = (n,v,days=365) => {
-      document.cookie = `${n}=${v}; Max-Age=${days*86400}; Path=/; SameSite=Lax`;
-    };
-    const delCookie = (n) => { document.cookie = `${n}=; Max-Age=0; Path=/; SameSite=Lax`; };
-
-    try { localStorage.setItem('__probe__','1'); localStorage.removeItem('__probe__');
-      return { get:()=>localStorage.getItem(KEY), set:(v)=>localStorage.setItem(KEY,v), del:()=>localStorage.removeItem(KEY), where:'localStorage' };
-    } catch(e) {
-      try { setCookie('__probe__','1',1); delCookie('__probe__');
-        return { get:()=>getCookie(KEY), set:(v)=>setCookie(KEY,v), del:()=>delCookie(KEY), where:'cookie' };
-      } catch(e2) {
-        return { get:()=>mem, set:(v)=>{mem=v;}, del:()=>{mem=null;}, where:'memory' };
+        // Load GA4 library
+        const s = document.createElement('script')
+        s.async = true
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-PNBLNQ7MDM'
+        s.onload = () => {
+          gtag('js', new Date())
+          // User already consented (we call loadGA only after accept)
+          gtag('consent', 'update', { analytics_storage: 'granted' })
+          gtag('config', 'G-PNBLNQ7MDM', {
+            anonymize_ip: true,
+            send_page_view: true,
+          })
+        }
+        document.head.appendChild(s)
       }
-    }
-  })();
 
-  // ---- Consent UI logic (runs after DOM ready) ----
-  document.addEventListener('DOMContentLoaded', () => {
-    const banner   = document.getElementById('consent-banner');
-    const accept   = document.getElementById('consent-accept');
-    const decline  = document.getElementById('consent-decline');
-    const settings = document.getElementById('cookie-settings');
+      // ---- Storage wrapper: localStorage → cookie → memory ----
+      const ConsentStore = (() => {
+        const KEY = 'analytics_consent_v1'
+        let mem = null
 
-    function showBanner(){ banner?.classList.remove('d-none'); }
-    function hideBanner(){ banner?.classList.add('d-none'); }
+        const getCookie = (n) =>
+          document.cookie
+            .split('; ')
+            .find((r) => r.startsWith(n + '='))
+            ?.split('=')[1] || null
+        const setCookie = (n, v, days = 365) => {
+          document.cookie = `${n}=${v}; Max-Age=${
+            days * 86400
+          }; Path=/; SameSite=Lax`
+        }
+        const delCookie = (n) => {
+          document.cookie = `${n}=; Max-Age=0; Path=/; SameSite=Lax`
+        }
 
-    function grant(){
-      ConsentStore.set('granted');
-      hideBanner();
-      loadGA(); // GA loads only now
-    }
-    function deny(){
-      ConsentStore.set('denied');
-      hideBanner();
-      // GA not loaded at all
-    }
+        try {
+          localStorage.setItem('__probe__', '1')
+          localStorage.removeItem('__probe__')
+          return {
+            get: () => localStorage.getItem(KEY),
+            set: (v) => localStorage.setItem(KEY, v),
+            del: () => localStorage.removeItem(KEY),
+            where: 'localStorage',
+          }
+        } catch (e) {
+          try {
+            setCookie('__probe__', '1', 1)
+            delCookie('__probe__')
+            return {
+              get: () => getCookie(KEY),
+              set: (v) => setCookie(KEY, v),
+              del: () => delCookie(KEY),
+              where: 'cookie',
+            }
+          } catch (e2) {
+            return {
+              get: () => mem,
+              set: (v) => {
+                mem = v
+              },
+              del: () => {
+                mem = null
+              },
+              where: 'memory',
+            }
+          }
+        }
+      })()
 
-    const saved = ConsentStore.get(); // "granted" | "denied" | null
-    if (saved === 'granted') {
-      loadGA();              // previously accepted → load immediately
-    } else if (saved === 'denied') {
-      // keep off; banner hidden
-    } else {
-      // No prior choice → show banner (even if DNT is on; change if desired)
-      showBanner();
-    }
+      // ---- Consent UI logic (runs after DOM ready) ----
+      document.addEventListener('DOMContentLoaded', () => {
+        const banner = document.getElementById('consent-banner')
+        const accept = document.getElementById('consent-accept')
+        const decline = document.getElementById('consent-decline')
+        const settings = document.getElementById('cookie-settings')
 
-    accept?.addEventListener('click', (e) => { e.preventDefault(); grant(); });
-    decline?.addEventListener('click', (e) => { e.preventDefault(); deny(); });
+        function showBanner() {
+          banner?.classList.remove('d-none')
+        }
+        function hideBanner() {
+          banner?.classList.add('d-none')
+        }
 
-    // Cookie settings link: reopen banner & clear choice
-    settings?.addEventListener('click', (e) => {
-      e.preventDefault();
-      ConsentStore.del();
-      showBanner();
-    });
+        function grant() {
+          ConsentStore.set('granted')
+          hideBanner()
+          loadGA() // GA loads only now
+        }
+        function deny() {
+          ConsentStore.set('denied')
+          hideBanner()
+          // GA not loaded at all
+        }
 
-    // Console helpers
-    window.consentGet = () => ConsentStore.get();
-    window.consentClear = () => ConsentStore.del();
-  });
-  </script>
-</body>
+        const saved = ConsentStore.get() // "granted" | "denied" | null
+        if (saved === 'granted') {
+          loadGA() // previously accepted → load immediately
+        } else if (saved === 'denied') {
+          // keep off; banner hidden
+        } else {
+          // No prior choice → show banner (even if DNT is on; change if desired)
+          showBanner()
+        }
+
+        accept?.addEventListener('click', (e) => {
+          e.preventDefault()
+          grant()
+        })
+        decline?.addEventListener('click', (e) => {
+          e.preventDefault()
+          deny()
+        })
+
+        // Cookie settings link: reopen banner & clear choice
+        settings?.addEventListener('click', (e) => {
+          e.preventDefault()
+          ConsentStore.del()
+          showBanner()
+        })
+
+        // Console helpers
+        window.consentGet = () => ConsentStore.get()
+        window.consentClear = () => ConsentStore.del()
+      })
+    </script>
+  </body>
 </html>
